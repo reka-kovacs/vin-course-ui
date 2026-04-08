@@ -27,37 +27,19 @@ export type Course = {
   title: string;
 };
 
-// TData
 export type TransformedData = {
   rows: RowInfo[];
   courses: Course[];
 };
 
 export const myTheme = themeQuartz.withParams({
-  accentColor: "#15BDE8",
-  backgroundColor: "#0C0C0D",
-  borderColor: "#ffffff00",
-  borderRadius: 20,
-  browserColorScheme: "dark",
-  cellHorizontalPaddingScale: 1,
-  chromeBackgroundColor: {
-    ref: "backgroundColor",
-  },
-  columnBorder: false,
+  accentColor: "#3575A8",
+  browserColorScheme: "light",
+  columnBorder: true,
   fontFamily: {
     googleFont: "Roboto",
   },
-  fontSize: 16,
-  foregroundColor: "#BBBEC9",
-  headerBackgroundColor: "#182226",
-  headerFontWeight: 500,
-  headerTextColor: "#FFFFFF",
-  headerVerticalPaddingScale: 0.9,
-  iconSize: 20,
-  rowBorder: true,
-  rowVerticalPaddingScale: 1.2,
-  sidePanelBorder: false,
-  spacing: 8,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
+  fontSize: 15,
+  headerRowBorder: true,
+  oddRowBackgroundColor: "#EEEAEA",
 });

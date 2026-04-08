@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClientSideRowModelModule,
   ColDef,
@@ -10,11 +10,13 @@ import {
   CellStyleModule,
   ModuleRegistry,
   PaginationModule,
+  QuickFilterModule,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
 import { RowInfo, RawRecord, TransformedData, CellData, Course } from "./types";
 import { formatCell, getColor } from "./helpers";
 import { myTheme } from "./types";
+import "./page.css";
 
 const modules = [
   CellStyleModule,
@@ -23,6 +25,7 @@ const modules = [
   ColumnAutoSizeModule,
   ClientSideRowModelModule,
   CellStyleModule,
+  QuickFilterModule,
   ...(process.env.NODE_ENV !== "production" ? [ValidationModule] : []),
 ];
 
@@ -79,12 +82,21 @@ function transformColumns(courses: Course[]): ColDef[] {
     cellStyle: function (params) {
       return {
         backgroundColor: getColor(params.value?.completion),
-        color: "#faf5f5",
       };
     },
     comparator: (a: CellData, b: CellData) => {
       const valA = a?.completion ?? -1;
       const valB = b?.completion ?? -1;
+      // if completion percentages are equal, sort by last accessed date
+      if (valA === valB) {
+        const dateA = a?.last_accessed
+          ? new Date(a.last_accessed).getTime()
+          : 0;
+        const dateB = b?.last_accessed
+          ? new Date(b.last_accessed).getTime()
+          : 0;
+        return dateA - dateB;
+      }
       return valA - valB;
     },
   }));
@@ -109,10 +121,12 @@ export default function MyTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const gridRef = useRef<AgGridReact>(null);
+
   const defaultColDef = useMemo<ColDef>(() => {
     return {
       flex: 1,
-      minWidth: 120,
+      minWidth: 160,
       resizable: true,
     };
   }, []);
@@ -125,7 +139,6 @@ export default function MyTable() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const res = await response.json();
-        // const rawData: RawRecord[] = res;
         const transformed = transformForTable(res);
 
         setRowData(transformed.rows);
@@ -142,6 +155,13 @@ export default function MyTable() {
     fetchData();
   }, []); // empty dependency array to run only once
 
+  const onFilterTextBoxChanged = useCallback(() => {
+    gridRef.current!.api.setGridOption(
+      "quickFilterText",
+      (document.getElementById("search-text-box") as HTMLInputElement).value,
+    );
+  }, []);
+
   if (loading) {
     return <div className="info-container">Loading...</div>;
   }
@@ -152,44 +172,48 @@ export default function MyTable() {
 
   return (
     <div className="min-h-full">
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            VIN Course Progress
-          </div>
+      <header className="header">
+        <div className="header-content">
+          <div className="gradient-text">VIN Course Progress</div>
 
-          {/* CTA Button */}
           <a
-            href="#"
-            className="bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-700 transition"
+            href="https://www.vin.com/vin/default.aspx?pId=130&id=8285988"
+            target="_blank"
+            className="learn-button"
           >
             Learn More
           </a>
         </div>
       </header>
 
-      <div>
-        <AgGridProvider modules={modules}>
-          <div
-            style={{
-              width: "100%",
-              height: "81vh",
-              fontFamily: "Roboto, sans-serif",
-            }}
-          >
-            <AgGridReact
-              rowData={rowData}
-              columnDefs={colData}
-              theme={myTheme}
-              defaultColDef={defaultColDef}
-              pagination={true}
-              paginationPageSize={10}
-              paginationPageSizeSelector={[10, 20, 50, 100]}
-              animateRows={true}
+      <AgGridProvider modules={modules}>
+        <div className="grid-wrapper">
+          <div className="search-box">
+            <span className="search-label">Search Participants:</span>
+            <input
+              className="search-input"
+              type="text"
+              id="search-text-box"
+              placeholder="Search..."
+              onInput={onFilterTextBoxChanged}
             />
           </div>
-        </AgGridProvider>
-      </div>
+
+          <AgGridReact
+            ref={gridRef}
+            rowData={rowData}
+            columnDefs={colData}
+            theme={myTheme}
+            loadThemeGoogleFonts={true}
+            defaultColDef={defaultColDef}
+            pagination={true}
+            paginationPageSize={10}
+            paginationPageSizeSelector={[10, 20, 50]}
+            animateRows={true}
+            domLayout="autoHeight"
+          />
+        </div>
+      </AgGridProvider>
     </div>
   );
 }
