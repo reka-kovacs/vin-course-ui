@@ -215,7 +215,7 @@ export default function MyTable() {
             paginationPageSize={10}
             paginationPageSizeSelector={[10, 20, 50]}
             animateRows={true}
-            domLayout="autoHeight"
+            domLayout={"autoHeight"}
           />
         </div>
       </AgGridProvider>
@@ -226,6 +226,7 @@ export default function MyTable() {
 const myTheme = themeQuartz.withParams({
   accentColor: "#3575A8",
   browserColorScheme: "light",
+  headerBackgroundColor: "#EEEAEA",
   columnBorder: true,
   fontFamily: {
     googleFont: "Roboto",
