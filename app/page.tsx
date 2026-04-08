@@ -13,7 +13,8 @@ import {
   PaginationModule,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
-import { RowInfo, RawRecord, TransformedData, CellData } from "./types";
+import { RowInfo, RawRecord, TransformedData, CellData, Course } from "./types";
+import error from "next/dist/api/error";
 const modules = [
   CellStyleModule,
   PaginationModule,
@@ -97,6 +98,38 @@ function transformForTable(data: RawRecord[]): TransformedData {
   };
 }
 
+function transformColumns(courses: Course[]): ColDef[] {
+  const dynamicCols: ColDef[] = courses.map((course) => ({
+    field: String(course.id),
+    headerName: "Course " + String(course.id),
+    sortable: true,
+    valueFormatter: (params) => formatCell(params.value),
+    cellStyle: function (params) {
+      return {
+        backgroundColor: getColor(params.value?.completion),
+        color: "#faf5f5",
+      };
+    },
+    comparator: (a: CellData, b: CellData) => {
+      const valA = a?.completion ?? -1;
+      const valB = b?.completion ?? -1;
+      return valA - valB;
+    },
+  }));
+
+  const cols: ColDef[] = [
+    {
+      field: "participant_id",
+      headerName: "Participant",
+      pinned: "left",
+      sortable: true,
+    },
+    ...dynamicCols,
+  ];
+
+  return cols;
+}
+
 // HELPERS
 function formatCell(cell?: CellData) {
   if (!cell) return "-";
@@ -124,7 +157,9 @@ function getColor(completion?: number | null) {
 // COMPONENT
 export default function MyTable() {
   const [rowData, setRowData] = useState<RowInfo[]>([]);
-  const [colDefs, setColDefs] = useState<any>([]);
+  const [colData, setColData] = useState<any>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const defaultColDef = useMemo<ColDef>(() => {
     return {
@@ -134,88 +169,43 @@ export default function MyTable() {
     };
   }, []);
 
-  // const [sorting, setSorting] = useState<SortingState>([]);
-
-  // const [pagination, setPagination] = React.useState<PaginationState>({
-  //   pageIndex: 0,
-  //   pageSize: 10,
-  // });
-
-  // const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-  //   left: [],
-  //   right: [],
-  // });
-  const datasource = {
-    getRows: async (params: any) => {
-      const { startRow, endRow, sortModel } = params.request;
-
-      const pageSize = endRow - startRow;
-      const page = startRow / pageSize;
-
-      const sort = sortModel[0];
-      const sortField = sort?.colId;
-      const sortDirection = sort?.sort;
-
-      try {
-        const res = await fetch(
-          `http://localhost:3001/api/progress?page=${page}&pageSize=${pageSize}&sortField=${sortField}&sortDir=${sortDirection}`,
-        );
-
-        const data = await res.json();
-
-        const transformed = transformForTable(data.rows);
-
-        params.success({
-          rowData: transformed.rows,
-          rowCount: data.totalCount, // total rows in DB
-        });
-      } catch (err) {
-        console.error(err);
-        params.fail();
-      }
-    },
-  };
-
   useEffect(() => {
-    fetch("http://localhost:3001/api/progress")
-      .then((res) => res.json())
-      .then((raw: RawRecord[]) => {
-        const transformed = transformForTable(raw);
-
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/progress");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const res = await response.json();
+        console.log("Raw API response:", res);
+        const rawData: RawRecord[] = res;
+        const transformed = transformForTable(rawData);
         setRowData(transformed.rows);
+        console.log("Transformed rows:", transformed.rows);
+        setColData(transformColumns(transformed.courses));
+        console.log(
+          "Transformed columns:",
+          transformColumns(transformed.courses),
+        );
+      } catch (error: any) {
+        setError(error.message);
+        setRowData([]);
+        setColData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        const dynamicCols: ColDef[] = transformed.courses.map((course) => ({
-          field: String(course.id),
-          headerName: "Course " + String(course.id),
-          sortable: true,
-          valueFormatter: (params) => formatCell(params.value),
-          cellStyle: function (params) {
-            return {
-              backgroundColor: getColor(params.value?.completion),
-              color: "#faf5f5",
-            };
-          },
-          comparator: (a: CellData, b: CellData) => {
-            const valA = a?.completion ?? -1;
-            const valB = b?.completion ?? -1;
-            return valA - valB;
-          },
-        }));
+    fetchData();
+  }, []); // empty dependency array to run only once
 
-        const cols: ColDef[] = [
-          {
-            field: "participant_id",
-            headerName: "Participant",
-            pinned: "left",
-            sortable: true,
-          },
-          ...dynamicCols,
-        ];
+  if (loading) {
+    return <div className="info-container">Loading...</div>;
+  }
 
-        setColDefs(cols);
-      })
-      .catch((err) => console.error("Failed to fetch data:", err));
-  }, []);
+  if (error) {
+    return <div className="info-container">Error: {error}</div>;
+  }
 
   return (
     <div className="min-h-full">
@@ -245,18 +235,14 @@ export default function MyTable() {
             }}
           >
             <AgGridReact
-              columnDefs={colDefs}
+              rowData={rowData}
+              columnDefs={colData}
               theme={myTheme}
               defaultColDef={defaultColDef}
-              multiSortKey="ctrl"
-              rowModelType="serverSide"
               pagination={true}
               paginationPageSize={10}
-              cacheBlockSize={10} // page size
+              paginationPageSizeSelector={[10, 20, 50, 100]}
               animateRows={true}
-              onGridReady={(params) => {
-                params.api.setGridOption("serverSideDatasource", datasource);
-              }}
             />
           </div>
         </AgGridProvider>
