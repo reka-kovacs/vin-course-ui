@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClientSideRowModelModule,
@@ -32,7 +31,7 @@ const modules = [
 ModuleRegistry.registerModules(modules);
 
 // TRANSFORMATION
-function transformForTable(data: RawRecord[]): TransformedData {
+function transformDataForTable(data: RawRecord[]): TransformedData {
   const participants: Record<number, RowInfo> = {};
   const coursesMap = new Map<number, string>();
 
@@ -101,6 +100,13 @@ function transformColumns(courses: Course[]): ColDef[] {
     },
   }));
 
+  // sort columns by increasing course ID
+  dynamicCols.sort((a, b) => {
+    const idA = parseInt(a.field?.toString() || "0") || 0;
+    const idB = parseInt(b.field?.toString() || "0") || 0;
+    return idA - idB;
+  });
+
   const cols: ColDef[] = [
     {
       field: "participant_id",
@@ -139,7 +145,7 @@ export default function MyTable() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const res = await response.json();
-        const transformed = transformForTable(res);
+        const transformed = transformDataForTable(res);
 
         setRowData(transformed.rows);
         setColData(transformColumns(transformed.courses));
@@ -175,7 +181,6 @@ export default function MyTable() {
       <header className="header">
         <div className="header-content">
           <div className="gradient-text">VIN Course Progress</div>
-
           <a
             href="https://www.vin.com/vin/default.aspx?pId=130&id=8285988"
             target="_blank"
