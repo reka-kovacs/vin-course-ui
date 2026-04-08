@@ -11,11 +11,11 @@ import {
   ModuleRegistry,
   PaginationModule,
   QuickFilterModule,
+  themeQuartz,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
 import { RowInfo, RawRecord, TransformedData, CellData, Course } from "./types";
 import { formatCell, getColor } from "./helpers";
-import { myTheme } from "./types";
 import "./page.css";
 
 const modules = [
@@ -217,3 +217,15 @@ export default function MyTable() {
     </div>
   );
 }
+
+const myTheme = themeQuartz.withParams({
+  accentColor: "#3575A8",
+  browserColorScheme: "light",
+  columnBorder: true,
+  fontFamily: {
+    googleFont: "Roboto",
+  },
+  fontSize: 15,
+  headerRowBorder: true,
+  oddRowBackgroundColor: "#EEEAEA",
+});
