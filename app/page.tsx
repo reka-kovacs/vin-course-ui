@@ -7,14 +7,15 @@ import {
   ColumnApiModule,
   ColumnAutoSizeModule,
   ValidationModule,
-  themeQuartz,
   CellStyleModule,
   ModuleRegistry,
   PaginationModule,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
 import { RowInfo, RawRecord, TransformedData, CellData, Course } from "./types";
-import error from "next/dist/api/error";
+import { formatCell, getColor } from "./helpers";
+import { myTheme } from "./types";
+
 const modules = [
   CellStyleModule,
   PaginationModule,
@@ -26,35 +27,6 @@ const modules = [
 ];
 
 ModuleRegistry.registerModules(modules);
-
-export const myTheme = themeQuartz.withParams({
-  accentColor: "#15BDE8",
-  backgroundColor: "#0C0C0D",
-  borderColor: "#ffffff00",
-  borderRadius: 20,
-  browserColorScheme: "dark",
-  cellHorizontalPaddingScale: 1,
-  chromeBackgroundColor: {
-    ref: "backgroundColor",
-  },
-  columnBorder: false,
-  fontFamily: {
-    googleFont: "Roboto",
-  },
-  fontSize: 16,
-  foregroundColor: "#BBBEC9",
-  headerBackgroundColor: "#182226",
-  headerFontWeight: 500,
-  headerTextColor: "#FFFFFF",
-  headerVerticalPaddingScale: 0.9,
-  iconSize: 20,
-  rowBorder: true,
-  rowVerticalPaddingScale: 1.2,
-  sidePanelBorder: false,
-  spacing: 8,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
-});
 
 // TRANSFORMATION
 function transformForTable(data: RawRecord[]): TransformedData {
@@ -130,30 +102,6 @@ function transformColumns(courses: Course[]): ColDef[] {
   return cols;
 }
 
-// HELPERS
-function formatCell(cell?: CellData) {
-  if (!cell) return "-";
-
-  const percent =
-    cell.completion != null ? `${(cell.completion * 100).toFixed(0)}%` : "N/A";
-
-  const date = cell.last_accessed
-    ? new Date(cell.last_accessed).toLocaleDateString()
-    : "—";
-  const time = cell.last_accessed
-    ? new Date(cell.last_accessed).toLocaleTimeString()
-    : "—";
-
-  return `${percent}\n${date}`;
-}
-
-function getColor(completion?: number | null) {
-  if (completion == null) return "transparent";
-  if (completion < 0.5) return "#f87171";
-  if (completion < 0.8) return "#facc15";
-  return "#4ade80";
-}
-
 // COMPONENT
 export default function MyTable() {
   const [rowData, setRowData] = useState<RowInfo[]>([]);
@@ -177,16 +125,11 @@ export default function MyTable() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const res = await response.json();
-        console.log("Raw API response:", res);
-        const rawData: RawRecord[] = res;
-        const transformed = transformForTable(rawData);
+        // const rawData: RawRecord[] = res;
+        const transformed = transformForTable(res);
+
         setRowData(transformed.rows);
-        console.log("Transformed rows:", transformed.rows);
         setColData(transformColumns(transformed.courses));
-        console.log(
-          "Transformed columns:",
-          transformColumns(transformed.courses),
-        );
       } catch (error: any) {
         setError(error.message);
         setRowData([]);
