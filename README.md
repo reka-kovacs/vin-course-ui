@@ -1,6 +1,6 @@
 ## VIN Course UI
 
-This app displays participant course progress from a defined list of courses.
+This app reads participant course progress data from a defined list of courses and displays it in a sortable table.
 
 To run:
 
