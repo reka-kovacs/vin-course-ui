@@ -13,9 +13,9 @@ import {
   themeQuartz,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
-import { RowInfo, RawRecord, TransformedData, CellData, Course } from "./types";
-import { formatCell, getColor } from "./helpers";
-import "./page.css";
+import { RowInfo, RawRecord, TransformedData, Course } from "../types";
+import { formatCell, getColor, courseComparator } from "../Helpers/helpers";
+import "./MyTable.css";
 
 const modules = [
   CellStyleModule,
@@ -31,7 +31,7 @@ const modules = [
 ModuleRegistry.registerModules(modules);
 
 // TRANSFORMATION
-function transformDataForTable(data: RawRecord[]): TransformedData {
+export function transformDataForTable(data: RawRecord[]): TransformedData {
   const participants: Record<number, RowInfo> = {};
   const coursesMap = new Map<number, string>();
 
@@ -72,7 +72,7 @@ function transformDataForTable(data: RawRecord[]): TransformedData {
   };
 }
 
-function transformColumns(courses: Course[]): ColDef[] {
+export function transformColumns(courses: Course[]): ColDef[] {
   const dynamicCols: ColDef[] = courses.map((course) => ({
     field: String(course.id),
     headerName: "Course " + String(course.id),
@@ -83,21 +83,7 @@ function transformColumns(courses: Course[]): ColDef[] {
         backgroundColor: getColor(params.value?.completion),
       };
     },
-    comparator: (a: CellData, b: CellData) => {
-      const valA = a?.completion ?? -1;
-      const valB = b?.completion ?? -1;
-      // if completion percentages are equal, sort by last accessed date
-      if (valA === valB) {
-        const dateA = a?.last_accessed
-          ? new Date(a.last_accessed).getTime()
-          : 0;
-        const dateB = b?.last_accessed
-          ? new Date(b.last_accessed).getTime()
-          : 0;
-        return dateA - dateB;
-      }
-      return valA - valB;
-    },
+    comparator: courseComparator,
   }));
 
   // sort columns by increasing course ID
