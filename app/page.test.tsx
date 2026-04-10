@@ -1,10 +1,9 @@
-import { transformDataForTable } from "./MyTable";
-import { transformColumns } from "./MyTable";
+import { transformDataForTable } from "./page";
+import { transformColumns } from "./page";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import MyTable from "./MyTable";
+import MyTable from "./page";
 import "@testing-library/jest-dom";
 import { jest } from "@jest/globals";
-import { courseComparator } from "../Helpers/helpers";
 
 const mockData = [
   {

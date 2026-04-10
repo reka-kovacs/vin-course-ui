@@ -13,9 +13,9 @@ import {
   themeQuartz,
 } from "ag-grid-community";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
-import { RowInfo, RawRecord, TransformedData, Course } from "../types";
-import { formatCell, getColor, courseComparator } from "../Helpers/helpers";
-import "./MyTable.css";
+import { RowInfo, RawRecord, TransformedData, Course } from "./types";
+import { formatCell, getColor, courseComparator } from "./helpers";
+import "./page.css";
 
 const modules = [
   CellStyleModule,
