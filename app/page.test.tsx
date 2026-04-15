@@ -3,29 +3,22 @@ import MyTable from "./page";
 import "@testing-library/jest-dom";
 import { jest } from "@jest/globals";
 
-const mockData = [
-  {
-    participant_id: 1,
-    course_id: 4209,
-    completion: 0.8,
-    last_accessed: "2024-01-01T00:00:00Z",
+const mockData = {
+  participants: [1],
+  courses: [{ id: 4209 }, { id: 4254 }],
+  matrix: {
+    1: {
+      4209: { completion: 0.8, last_accessed: "2024-01-01" },
+      4254: { completion: 0.5, last_accessed: "2024-01-02" },
+    },
   },
-  {
-    participant_id: 1,
-    course_id: 4254,
-    completion: 0.5,
-    last_accessed: "2024-01-02T00:00:00Z",
-  },
-  {
-    participant_id: 2,
-    course_id: 4209,
-    completion: null,
-    last_accessed: null,
-  },
-];
+};
 
 const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
-jest.mock("ag-grid-react");
+jest.mock("ag-grid-react", () => ({
+  AgGridReact: () => <div data-testid="ag-grid" />,
+  AgGridProvider: ({ children }: any) => <div>{children}</div>,
+}));
 
 beforeAll(() => {
   global.fetch = fetchMock;
@@ -49,9 +42,7 @@ describe("table", () => {
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText(/Vin Course Progress/i)).toBeInTheDocument();
-    });
+    await screen.findByText(/VIN Course Progress/i);
 
     expect(screen.getByTestId("ag-grid")).toBeInTheDocument();
   });
@@ -59,27 +50,23 @@ describe("table", () => {
   it("groups duplicate participants correctly", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(
-        JSON.stringify([
-          {
-            participant_id: 1,
-            course_id: 1,
-            completion: 10,
-            last_accessed: "2024-01-02T00:00:00Z",
+        JSON.stringify({
+          participants: [1],
+          courses: [{ id: 4209 }, { id: 4254 }],
+          matrix: {
+            1: {
+              4209: { completion: 0.8, last_accessed: "2024-01-01" },
+              4254: { completion: 0.5, last_accessed: "2024-01-02" },
+            },
           },
-          {
-            participant_id: 1,
-            course_id: 2,
-            completion: 20,
-            last_accessed: "2024-01-02T00:00:00Z",
-          },
-        ]),
+        }),
         { status: 200 },
       ),
     );
 
     render(<MyTable />);
 
-    await screen.findByText(/vin course progress/i);
+    await screen.findByText(/VIN Course Progress/i);
 
     const grid = screen.getByTestId("ag-grid");
     expect(grid).toBeInTheDocument();
@@ -92,9 +79,8 @@ describe("table", () => {
 
     render(<MyTable />);
 
-    await screen.findByText(/vin course progress/i);
-
-    expect(screen.getByText(/vin course progress/i)).toBeInTheDocument();
+    await screen.findByText(/VIN Course Progress/i);
+    expect(screen.getByText(/VIN Course Progress/i)).toBeInTheDocument();
   });
 
   it("shows error when fetch fails", async () => {
@@ -106,9 +92,8 @@ describe("table", () => {
 
     render(<MyTable />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument();
-    });
+    await screen.findByText(/error/i);
+    expect(screen.getByText(/error/i)).toBeInTheDocument();
   });
 
   it("updates quick filter text", async () => {
@@ -118,7 +103,7 @@ describe("table", () => {
 
     render(<MyTable />);
 
-    await waitFor(() => screen.getByText(/vin course progress/i));
+    await screen.findByText(/VIN Course Progress/i);
 
     const input = screen.getByPlaceholderText("Search...");
 

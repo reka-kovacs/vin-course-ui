@@ -65,24 +65,21 @@ export default function MyTable() {
         }
         const data = await response.json();
 
-        const rowData = data.participants.map((p: string) => ({
+        const rowData = (data.participants ?? []).map((p: string) => ({
           participant_id: p,
-          ...data.matrix[p],
+          ...data.matrix?.[p],
         }));
 
         const colDefs = [
           { field: "participant_id", pinned: "left", sortable: true },
-          ...data.courses.map((c: any) => ({
+          ...(data.courses ?? []).map((c: any) => ({
             field: c.id,
             headerName: `Course ${c.id}`,
             sortable: true,
-            valueFormatter: (params: any) => {
-              return formatCell(params.value);
-            },
-
-            cellStyle: (params: any) => {
-              return { backgroundColor: getColor(params.value?.completion) };
-            },
+            valueFormatter: (params: any) => formatCell(params.value),
+            cellStyle: (params: any) => ({
+              backgroundColor: getColor(params.value?.completion),
+            }),
             comparator: courseComparator,
           })),
         ];
