@@ -1,4 +1,4 @@
-import { courseComparator, formatCell, getColor } from "./helpers";
+import { formatCell, getColor, courseComparator } from "./helpers";
 
 describe("formatCell", () => {
   it("should display the correct completion percentage", () => {

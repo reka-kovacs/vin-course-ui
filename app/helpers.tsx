@@ -1,4 +1,4 @@
-import { CellData } from "./types";
+import { CellData } from "./page";
 
 // HELPERS
 export function formatCell(cell?: CellData) {
@@ -11,11 +11,6 @@ export function formatCell(cell?: CellData) {
     ? new Date(cell.last_accessed).toLocaleDateString()
     : "—";
 
-  // could be use to show tooltip with last accessed time
-  let time = cell.metadata?.time_last_accessed
-    ? new Date(cell.metadata.time_last_accessed).toLocaleTimeString()
-    : "—";
-
   return `${percent}\n${date}`;
 }
 
@@ -26,7 +21,10 @@ export function getColor(completion?: number | null) {
   return "#a7f5c4";
 }
 
-export function courseComparator(a: CellData, b: CellData) {
+export function courseComparator(valueA: any, valueB: any) {
+  const a = valueA as CellData | undefined;
+  const b = valueB as CellData | undefined;
+
   const valA = a?.completion ?? -1;
   const valB = b?.completion ?? -1;
 

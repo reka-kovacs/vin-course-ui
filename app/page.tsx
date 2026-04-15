@@ -12,9 +12,8 @@ import {
   QuickFilterModule,
   themeQuartz,
 } from "ag-grid-community";
+import { formatCell, courseComparator, getColor } from "./helpers";
 import { AgGridProvider, AgGridReact } from "ag-grid-react";
-import { RowInfo, RawRecord, TransformedData, Course } from "./types";
-import { formatCell, getColor, courseComparator } from "./helpers";
 import "./page.css";
 
 const modules = [
@@ -30,91 +29,17 @@ const modules = [
 
 ModuleRegistry.registerModules(modules);
 
-// TRANSFORMATION
-export function transformDataForTable(data: RawRecord[]): TransformedData {
-  const participants: Record<number, RowInfo> = {};
-  const coursesMap = new Map<number, string>();
-
-  data.forEach((row) => {
-    const {
-      participant_id,
-      course_id,
-      course_title,
-      completion,
-      first_accessed,
-      last_accessed,
-    } = row;
-
-    if (!participants[participant_id]) {
-      participants[participant_id] = {
-        participant_id,
-      };
-    }
-
-    // if no last accessed time, use first accessed time as fallback for sorting and display
-    const lastAccessedTime = last_accessed || first_accessed || null;
-
-    participants[participant_id][course_id] = {
-      completion,
-      last_accessed: lastAccessedTime,
-      metadata: {
-        time_last_accessed: lastAccessedTime
-          ? new Date(lastAccessedTime).toISOString()
-          : "",
-      },
-    };
-
-    if (!coursesMap.has(course_id)) {
-      coursesMap.set(course_id, course_title || `Course ${course_id}`);
-    }
-  });
-
-  return {
-    rows: Object.values(participants),
-    courses: Array.from(coursesMap.entries()).map(([id, title]) => ({
-      id,
-      title,
-    })),
+export type CellData = {
+  completion: number | null;
+  last_accessed: string | null;
+  metadata?: {
+    time_last_accessed: string;
   };
-}
-
-export function transformColumns(courses: Course[]): ColDef[] {
-  const dynamicCols: ColDef[] = courses.map((course) => ({
-    field: String(course.id),
-    headerName: "Course " + String(course.id),
-    sortable: true,
-    valueFormatter: (params) => formatCell(params.value),
-    cellStyle: function (params) {
-      return {
-        backgroundColor: getColor(params.value?.completion),
-      };
-    },
-    comparator: courseComparator,
-  }));
-
-  // sort columns by increasing course ID
-  dynamicCols.sort((a, b) => {
-    const idA = parseInt(a.field?.toString() || "0") || 0;
-    const idB = parseInt(b.field?.toString() || "0") || 0;
-    return idA - idB;
-  });
-
-  const cols: ColDef[] = [
-    {
-      field: "participant_id",
-      headerName: "Participant",
-      pinned: "left",
-      sortable: true,
-    },
-    ...dynamicCols,
-  ];
-
-  return cols;
-}
+};
 
 // COMPONENT
 export default function MyTable() {
-  const [rowData, setRowData] = useState<RowInfo[]>([]);
+  const [rowData, setRowData] = useState<any>([]);
   const [colData, setColData] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -132,15 +57,38 @@ export default function MyTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/progress");
+        const response = await fetch(
+          "http://localhost:3001/api/progress/crosstab",
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const res = await response.json();
-        const transformed = transformDataForTable(res);
+        const data = await response.json();
 
-        setRowData(transformed.rows);
-        setColData(transformColumns(transformed.courses));
+        const rowData = data.participants.map((p: string) => ({
+          participant_id: p,
+          ...data.matrix[p],
+        }));
+
+        const colDefs = [
+          { field: "participant_id", pinned: "left", sortable: true },
+          ...data.courses.map((c: any) => ({
+            field: c.id,
+            headerName: `Course ${c.id}`,
+            sortable: true,
+            valueFormatter: (params: any) => {
+              return formatCell(params.value);
+            },
+
+            cellStyle: (params: any) => {
+              return { backgroundColor: getColor(params.value?.completion) };
+            },
+            comparator: courseComparator,
+          })),
+        ];
+
+        setRowData(rowData);
+        setColData(colDefs);
       } catch (error: any) {
         setError(error.message);
         setRowData([]);
