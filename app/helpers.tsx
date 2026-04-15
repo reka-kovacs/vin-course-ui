@@ -2,7 +2,7 @@ import { CellData } from "./types";
 
 // HELPERS
 export function formatCell(cell?: CellData) {
-  if (!cell || (!cell.completion && !cell.last_accessed)) return "—";
+  if (!cell || (cell.completion == null && !cell.last_accessed)) return "—";
 
   const percent =
     cell.completion != null ? `${(cell.completion * 100).toFixed(0)}%` : "N/A";
