@@ -56,6 +56,7 @@ export function transformDataForTable(data: RawRecord[]): TransformedData {
       first_accessed,
       last_accessed,
       metadata: {
+        time_first_accessed: first_accessed || "",
         time_last_accessed: last_accessed || "",
       },
     };
