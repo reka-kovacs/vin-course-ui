@@ -50,6 +50,7 @@ describe("transformDataForTable", () => {
         course_title: "Course A",
         completion: 80,
         last_accessed: "2025-01-01",
+        first_accessed: "2024-12-01",
       },
       {
         participant_id: 1,
@@ -57,6 +58,7 @@ describe("transformDataForTable", () => {
         course_title: "Course B",
         completion: 50,
         last_accessed: "2025-01-02",
+        first_accessed: "2024-12-02",
       },
     ];
 
@@ -76,6 +78,7 @@ describe("transformDataForTable", () => {
         course_title: "",
         completion: 20,
         last_accessed: null,
+        first_accessed: null,
       },
     ];
 
