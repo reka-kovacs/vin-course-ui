@@ -51,13 +51,16 @@ export function transformDataForTable(data: RawRecord[]): TransformedData {
       };
     }
 
+    // if no last accessed time, use first accessed time as fallback for sorting and display
+    const lastAccessedTime = last_accessed || first_accessed || null;
+
     participants[participant_id][course_id] = {
       completion,
-      first_accessed,
-      last_accessed,
+      last_accessed: lastAccessedTime,
       metadata: {
-        time_first_accessed: first_accessed || "",
-        time_last_accessed: last_accessed || "",
+        time_last_accessed: lastAccessedTime
+          ? new Date(lastAccessedTime).toISOString()
+          : "",
       },
     };
 

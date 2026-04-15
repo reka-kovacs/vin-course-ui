@@ -10,10 +10,8 @@ export type RawRecord = {
 
 export type CellData = {
   completion: number | null;
-  first_accessed: string | null;
   last_accessed: string | null;
   metadata?: {
-    time_first_accessed: string;
     time_last_accessed: string;
   };
 };
