@@ -4,13 +4,16 @@ export type RawRecord = {
   course_id: number;
   course_title: string | null;
   completion: number | null;
+  first_accessed: string | null;
   last_accessed: string | null;
 };
 
 export type CellData = {
   completion: number | null;
+  first_accessed: string | null;
   last_accessed: string | null;
   metadata?: {
+    time_first_accessed: string;
     time_last_accessed: string;
   };
 };

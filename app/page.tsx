@@ -41,6 +41,7 @@ export function transformDataForTable(data: RawRecord[]): TransformedData {
       course_id,
       course_title,
       completion,
+      first_accessed,
       last_accessed,
     } = row;
 
@@ -52,6 +53,7 @@ export function transformDataForTable(data: RawRecord[]): TransformedData {
 
     participants[participant_id][course_id] = {
       completion,
+      first_accessed,
       last_accessed,
       metadata: {
         time_last_accessed: last_accessed || "",

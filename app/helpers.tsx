@@ -2,17 +2,31 @@ import { CellData } from "./types";
 
 // HELPERS
 export function formatCell(cell?: CellData) {
-  if (!cell || (!cell.completion && !cell.last_accessed)) return "—";
+  if (
+    !cell ||
+    (!cell.completion && !cell.last_accessed && !cell.first_accessed)
+  )
+    return "—";
 
   const percent =
     cell.completion != null ? `${(cell.completion * 100).toFixed(0)}%` : "N/A";
 
-  const date = cell.last_accessed
+  let date = cell.last_accessed
     ? new Date(cell.last_accessed).toLocaleDateString()
     : "—";
-  const time = cell.last_accessed
-    ? new Date(cell.last_accessed).toLocaleTimeString()
+  // if no last accessed date, try first accessed date
+  if (date === "—" && cell.first_accessed) {
+    date = new Date(cell.first_accessed).toLocaleDateString();
+  }
+
+  // could be use to show tooltip with last accessed time
+  let time = cell.metadata?.time_last_accessed
+    ? new Date(cell.metadata.time_last_accessed).toLocaleTimeString()
     : "—";
+  // if no last accessed time, try first accessed time
+  if (time === "—" && cell.metadata?.time_first_accessed) {
+    time = new Date(cell.metadata.time_first_accessed).toLocaleTimeString();
+  }
 
   return `${percent}\n${date}`;
 }
