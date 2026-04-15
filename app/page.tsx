@@ -70,9 +70,18 @@ export default function MyTable() {
           ...data.matrix?.[p],
         }));
 
+        const sortedCourses = [...(data.courses ?? [])].sort(
+          (a, b) => a.id - b.id,
+        );
+
         const colDefs = [
-          { field: "participant_id", pinned: "left", sortable: true },
-          ...(data.courses ?? []).map((c: any) => ({
+          {
+            field: "participant_id",
+            headerName: "Participant ID",
+            pinned: "left",
+            sortable: true,
+          },
+          ...sortedCourses.map((c: any) => ({
             field: c.id,
             headerName: `Course ${c.id}`,
             sortable: true,
