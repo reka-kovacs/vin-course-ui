@@ -57,9 +57,7 @@ export default function MyTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3001/api/progress/crosstab",
-        );
+        const response = await fetch("http://localhost:3001/api/progress");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
